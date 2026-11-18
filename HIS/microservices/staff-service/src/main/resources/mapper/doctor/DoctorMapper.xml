@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.staff.domain.employee.doctor.mapper.DoctorMapper">
+
+    <!--議고쉶-->
+    <select id="selectDoctorById" parameterType="string" resultType="com.staff.domain.employee.doctor.dto.DoctorResponseDTO">
+        SELECT d.STAFF_ID AS staffId,
+               e.DEPT_ID AS deptId,
+               e.NAME AS name,
+               e.PHONE AS phone,
+               e.EMAIL AS email,
+               e.BIRTH_DATE AS birthDate,
+               e.GENDER_CODE AS genderCode,
+               e.ZIP_CODE AS zipCode,
+               e.ADDRESS1 AS address1,
+               e.ADDRESS2 AS address2,
+               e.STATUS AS status,
+
+               d.LICENSE_NO AS licenseNo,
+               d.DOCTOR_TYPE AS doctorType,
+               d.SPECIALTY_ID AS specialtyId,
+               d.PROFILE_SUMMARY AS profileSummary,
+               d.DOCTOR_FILE_URL AS doctorFileUrl,
+               d.EDUCATION AS education,
+               d.CAREER_DETAIL AS careerDetail,
+               d.EXT_NO AS extNo
+
+        FROM HOSPITAL.EMPLOYEE_DOCTOR d JOIN HOSPITAL.EMPLOYEE e ON e.STAFF_ID = d.STAFF_ID
+        WHERE d.STAFF_ID = #{staffId}
+    </select>
+
+
+    <!--?④굔 議고쉶-->
+    <select id="selectDoctorList" resultType="com.staff.domain.employee.doctor.dto.DoctorResponseDTO">
+        SELECT d.STAFF_ID AS staffId,
+               e.DEPT_ID AS deptId,
+               e.NAME AS name,
+               e.PHONE AS phone,
+               e.EMAIL AS email,
+               e.BIRTH_DATE AS birthDate,
+               e.GENDER_CODE AS genderCode,
+               e.ZIP_CODE AS zipCode,
+               e.ADDRESS1 AS address1,
+               e.ADDRESS2 AS address2,
+               e.STATUS AS status,
+
+               d.LICENSE_NO AS licenseNo,
+               d.DOCTOR_TYPE AS doctorType,
+               d.SPECIALTY_ID AS specialtyId,
+               d.PROFILE_SUMMARY AS profileSummary,
+               d.DOCTOR_FILE_URL AS doctorFileUrl,
+               d.EDUCATION AS education,
+               d.CAREER_DETAIL AS careerDetail,
+               d.EXT_NO AS extNo
+
+        FROM HOSPITAL.EMPLOYEE_DOCTOR d JOIN HOSPITAL.EMPLOYEE e ON e.STAFF_ID = d.STAFF_ID
+
+    </select>
+
+
+
+    <!--寃??議고쉶-->
+    <select id="searchDoctorList"
+            parameterType="map"
+            resultType="com.staff.domain.employee.doctor.dto.DoctorResponseDTO">
+
+        SELECT
+        d.STAFF_ID AS staffId,
+        e.DEPT_ID AS deptId,
+        e.NAME AS name,
+        e.PHONE AS phone,
+        e.EMAIL AS email,
+        e.BIRTH_DATE AS birthDate,
+        e.GENDER_CODE AS genderCode,
+        e.ZIP_CODE AS zipCode,
+        e.ADDRESS1 AS address1,
+        e.ADDRESS2 AS address2,
+        e.STATUS AS status,
+        d.LICENSE_NO AS licenseNo,
+        d.DOCTOR_TYPE AS doctorType,
+        d.SPECIALTY_ID AS specialtyId,
+        d.PROFILE_SUMMARY AS profileSummary,
+        d.DOCTOR_FILE_URL AS doctorFileUrl,
+        d.EDUCATION AS education,
+        d.CAREER_DETAIL AS careerDetail,
+        d.EXT_NO AS extNo
+        FROM HOSPITAL.EMPLOYEE_DOCTOR d
+        JOIN HOSPITAL.EMPLOYEE e
+        ON e.STAFF_ID = d.STAFF_ID
+
+        <where>
+            <if test="search != null and search != ''">
+                <choose>
+                    <!-- ?대쫫 -->
+                    <when test="searchType == 'name'">
+                        e.NAME LIKE '%' || #{search} || '%'
+                    </when>
+
+                    <!-- 吏꾨즺怨?-->
+                    <when test="searchType == 'specialty'">
+                        d.SPECIALTY_ID LIKE '%' || #{search} || '%'
+                    </when>
+
+                    <!-- ?ъ썝踰덊샇 -->
+                    <when test="searchType == 'staffId'">
+                        d.STAFF_ID LIKE '%' || #{search} || '%'
+                    </when>
+
+                    <!-- 遺??-->
+                    <when test="searchType == 'dept'">
+                        e.DEPT_ID LIKE '%' || #{search} || '%'
+                    </when>
+
+                    <!-- ?щ궡踰덊샇 -->
+                    <when test="searchType == 'extNo'">
+                        d.EXT_NO LIKE '%' || #{search} || '%'
+                    </when>
+
+                    <!-- ?꾩껜 -->
+                    <otherwise>
+                        (
+                        e.NAME LIKE '%' || #{search} || '%'
+                        OR d.SPECIALTY_ID LIKE '%' || #{search} || '%'
+                        OR d.STAFF_ID LIKE '%' || #{search} || '%'
+                        OR e.DEPT_ID LIKE '%' || #{search} || '%'
+                        OR d.EXT_NO LIKE '%' || #{search} || '%'
+                        )
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+
+        ORDER BY d.STAFF_ID DESC
+    </select>
+
+
+
+</mapper>
+
+

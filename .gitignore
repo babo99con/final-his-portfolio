@@ -1,0 +1,52 @@
+﻿# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+build/
+dist/
+target/
+.gradle/
+*.class
+*.jar
+*.war
+*.ear
+!**/gradle/wrapper/gradle-wrapper.jar
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.ppk
+*.key
+*.crt
+
+# Database dumps and archives
+*.dmp
+exports/
+*.zip
+*.7z
+*.tar
+*.gz
+!HOSPITAL_EXPORT/
+!HOSPITAL_EXPORT/*.dmp
+
+# Logs / runtime
+*.log
+logs/
+runtime-logs/
+.codex-runtime-logs/
+.codex-dev*.log
+!HOSPITAL_EXPORT/*.exp.log
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Nested git metadata
+.git/
+**/.git/

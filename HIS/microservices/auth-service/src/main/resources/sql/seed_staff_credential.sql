@@ -1,0 +1,208 @@
+-- Sample data for HOSPITAL.STAFF_CREDENTIAL (Oracle)
+-- Safe to run multiple times: inserts are guarded by NOT EXISTS.
+
+-- Staff #1: ACTIVE license + ACTIVE certificate
+INSERT INTO HOSPITAL.STAFF_CREDENTIAL (
+    ID,
+    STAFF_ID,
+    CRED_TYPE,
+    NAME,
+    CRED_NUMBER,
+    ISSUER,
+    ISSUED_AT,
+    EXPIRES_AT,
+    STATUS,
+    EVIDENCE_KEY,
+    CREATED_AT,
+    UPDATED_AT
+)
+SELECT
+    NULL,
+    s.ID,
+    'LICENSE',
+    '?섏궗 硫댄뿀',
+    'LIC-1001',
+    '蹂닿굔蹂듭?遺',
+    ADD_MONTHS(TRUNC(SYSDATE), -24),
+    ADD_MONTHS(TRUNC(SYSDATE), 8),
+    'ACTIVE',
+    NULL,
+    SYSDATE,
+    SYSDATE
+FROM (SELECT ID FROM HOSPITAL.AUTH_USER WHERE ROWNUM = 1) s
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM HOSPITAL.STAFF_CREDENTIAL c
+    WHERE c.STAFF_ID = s.ID
+      AND c.CRED_TYPE = 'LICENSE'
+      AND c.CRED_NUMBER = 'LIC-1001'
+);
+
+INSERT INTO HOSPITAL.STAFF_CREDENTIAL (
+    ID,
+    STAFF_ID,
+    CRED_TYPE,
+    NAME,
+    CRED_NUMBER,
+    ISSUER,
+    ISSUED_AT,
+    EXPIRES_AT,
+    STATUS,
+    EVIDENCE_KEY,
+    CREATED_AT,
+    UPDATED_AT
+)
+SELECT
+    NULL,
+    s.ID,
+    'CERT',
+    '?ы룓?뚯깮???먭꺽利?,
+    'CERT-1001',
+    '??쒖떖?먯냼?앺삊??,
+    ADD_MONTHS(TRUNC(SYSDATE), -12),
+    ADD_MONTHS(TRUNC(SYSDATE), 2),
+    'ACTIVE',
+    NULL,
+    SYSDATE,
+    SYSDATE
+FROM (SELECT ID FROM HOSPITAL.AUTH_USER WHERE ROWNUM = 1) s
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM HOSPITAL.STAFF_CREDENTIAL c
+    WHERE c.STAFF_ID = s.ID
+      AND c.CRED_TYPE = 'CERT'
+      AND c.CRED_NUMBER = 'CERT-1001'
+);
+
+-- Staff #2: EXPIRED license + REVOKED certificate
+INSERT INTO HOSPITAL.STAFF_CREDENTIAL (
+    ID,
+    STAFF_ID,
+    CRED_TYPE,
+    NAME,
+    CRED_NUMBER,
+    ISSUER,
+    ISSUED_AT,
+    EXPIRES_AT,
+    STATUS,
+    EVIDENCE_KEY,
+    CREATED_AT,
+    UPDATED_AT
+)
+SELECT
+    NULL,
+    s.ID,
+    'LICENSE',
+    '媛꾪샇??硫댄뿀',
+    'LIC-2001',
+    '蹂닿굔蹂듭?遺',
+    ADD_MONTHS(TRUNC(SYSDATE), -60),
+    ADD_MONTHS(TRUNC(SYSDATE), -6),
+    'EXPIRED',
+    NULL,
+    SYSDATE,
+    SYSDATE
+FROM (
+    SELECT ID
+    FROM (
+        SELECT ID, ROW_NUMBER() OVER (ORDER BY ID) AS RN
+        FROM HOSPITAL.AUTH_USER
+    )
+    WHERE RN = 2
+) s
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM HOSPITAL.STAFF_CREDENTIAL c
+    WHERE c.STAFF_ID = s.ID
+      AND c.CRED_TYPE = 'LICENSE'
+      AND c.CRED_NUMBER = 'LIC-2001'
+);
+
+INSERT INTO HOSPITAL.STAFF_CREDENTIAL (
+    ID,
+    STAFF_ID,
+    CRED_TYPE,
+    NAME,
+    CRED_NUMBER,
+    ISSUER,
+    ISSUED_AT,
+    EXPIRES_AT,
+    STATUS,
+    EVIDENCE_KEY,
+    CREATED_AT,
+    UPDATED_AT
+)
+SELECT
+    NULL,
+    s.ID,
+    'CERT',
+    '?섏닠??媛먯뿼愿由??먭꺽利?,
+    'CERT-2001',
+    '??쒓컧?쇨?由ы븰??,
+    ADD_MONTHS(TRUNC(SYSDATE), -36),
+    ADD_MONTHS(TRUNC(SYSDATE), 12),
+    'REVOKED',
+    NULL,
+    SYSDATE,
+    SYSDATE
+FROM (
+    SELECT ID
+    FROM (
+        SELECT ID, ROW_NUMBER() OVER (ORDER BY ID) AS RN
+        FROM HOSPITAL.AUTH_USER
+    )
+    WHERE RN = 2
+) s
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM HOSPITAL.STAFF_CREDENTIAL c
+    WHERE c.STAFF_ID = s.ID
+      AND c.CRED_TYPE = 'CERT'
+      AND c.CRED_NUMBER = 'CERT-2001'
+);
+
+-- Staff #3: expiring soon ACTIVE cert (for notification UI)
+INSERT INTO HOSPITAL.STAFF_CREDENTIAL (
+    ID,
+    STAFF_ID,
+    CRED_TYPE,
+    NAME,
+    CRED_NUMBER,
+    ISSUER,
+    ISSUED_AT,
+    EXPIRES_AT,
+    STATUS,
+    EVIDENCE_KEY,
+    CREATED_AT,
+    UPDATED_AT
+)
+SELECT
+    NULL,
+    s.ID,
+    'CERT',
+    '以묓솚?먯떎 ?꾨Ц?먭꺽利?,
+    'CERT-3001',
+    '??쒖쨷?섏옄?섑븰??,
+    ADD_MONTHS(TRUNC(SYSDATE), -24),
+    TRUNC(SYSDATE) + 10,
+    'ACTIVE',
+    NULL,
+    SYSDATE,
+    SYSDATE
+FROM (
+    SELECT ID
+    FROM (
+        SELECT ID, ROW_NUMBER() OVER (ORDER BY ID) AS RN
+        FROM HOSPITAL.AUTH_USER
+    )
+    WHERE RN = 3
+) s
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM HOSPITAL.STAFF_CREDENTIAL c
+    WHERE c.STAFF_ID = s.ID
+      AND c.CRED_TYPE = 'CERT'
+      AND c.CRED_NUMBER = 'CERT-3001'
+);
+
+COMMIT;
