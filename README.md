@@ -80,8 +80,8 @@ NHS.UK의 페이지 하단 지원 링크 배치와 NHS 공식 푸터 가이드�
 Git과 Docker Desktop이 필요합니다. Windows CMD에서 실행합니다.
 
 ```cmd
-git clone https://github.com/babo99con/final_his.git
-cd final_his
+git clone https://github.com/babo99con/final-his-portfolio.git
+cd final-his-portfolio
 copy .env.example .env
 docker compose up --build -d
 ```

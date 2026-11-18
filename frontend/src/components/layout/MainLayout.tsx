@@ -187,7 +187,7 @@ export default function MainLayout({
             }}
           >
             <Link
-              href="https://github.com/babo99con/final_his#readme"
+              href="https://github.com/babo99con/final-his-portfolio#readme"
               color="inherit"
               underline="always"
             >
