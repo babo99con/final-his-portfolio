@@ -57,8 +57,9 @@ export function mapVisitRow(raw: Record<string, unknown>): ClinicalRes {
   };
 }
 
-export async function fetchClinicalApi(): Promise<ClinicalRes[]> {
-  const res = await fetch(`${CLINICAL_API_BASE}/api/clinical`, { cache: "no-store" });
+export async function fetchClinicalApi(receptionId?: number): Promise<ClinicalRes[]> {
+  const query = receptionId == null ? "" : `?receptionId=${receptionId}`;
+  const res = await fetch(`${CLINICAL_API_BASE}/api/clinical${query}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`진료 조회 실패 (${res.status})`);
   const body = (await res.json()) as ApiEnvelope<unknown[]> | unknown[];
   const raw = Array.isArray(body) ? body : (body.data ?? body.result ?? []);

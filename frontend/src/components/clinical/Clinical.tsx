@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import MainLayout from "@/components/layout/MainLayout";
 import { Alert, Box, Snackbar, Stack } from "@mui/material";
@@ -24,10 +24,13 @@ import {
   type PastHistoryItem,
 } from "@/lib/clinical/clinicalPastHistoryApi";
 import {
+  fetchClinicalApi,
   isNetworkError,
   clinicalConnectionMessage,
+  type ClinicalRes,
   type ReceptionQueueItem,
 } from "@/lib/clinical/visitApi";
+import { fetchReceptionApi } from "@/lib/reception/receptionApi";
 import { isTerminalVisitClinicalStatus, resolveClinicalStatus } from "./clinicalDocumentation";
 import { ClinicalToolbar } from "./ClinicalEncounter";
 import { ClinicalPatientList } from "./ClinicalList";
@@ -53,12 +56,13 @@ const NOTE_AUTOSAVE_MS = 750;
 
 export default function ClinicalPage() {
   const dispatch = useDispatch();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const LEFT_LIST_PAGE_SIZE = 10;
   const PAST_CLINICAL_PAGE_SIZE = 10;
 
   const patients = useSelector((s: RootState) => s.clinical.patients);
-  const clinicals = useSelector((s: RootState) => s.clinical.clinicals);
+  const clinicalRows = useSelector((s: RootState) => s.clinical.clinicals);
   const receptions = useSelector((s: RootState) => s.clinical.receptions);
   const receptionLoading = useSelector((s: RootState) => s.clinical.receptionLoading);
   const errorMessage = useSelector((s: RootState) => s.clinical.errorMessage);
@@ -68,6 +72,14 @@ export default function ClinicalPage() {
   const startVisitError = useSelector((s: RootState) => s.clinical.startVisitError);
   const endVisitPhase = useSelector((s: RootState) => s.clinical.endVisitPhase);
   const endVisitError = useSelector((s: RootState) => s.clinical.endVisitError);
+
+  const [linkedVisits, setLinkedVisits] = React.useState<ClinicalRes[]>([]);
+  const [linkedChartError, setLinkedChartError] = React.useState<string | null>(null);
+  const [linkedChartRevision, refreshLinkedChart] = React.useReducer((revision) => revision + 1, 0);
+  const clinicals = React.useMemo(() => {
+    const linkedIds = new Set(linkedVisits.map((visit) => visit.clinicalId ?? visit.id));
+    return [...linkedVisits, ...clinicalRows.filter((visit) => !linkedIds.has(visit.clinicalId ?? visit.id))];
+  }, [clinicalRows, linkedVisits]);
 
   const [selectedReception, setSelectedReception] = React.useState<ReceptionQueueItem | null>(null);
   const [leftPage, setLeftPage] = React.useState(1);
@@ -276,18 +288,32 @@ export default function ClinicalPage() {
   }, [dispatch]);
 
   React.useEffect(() => {
-    if (queryReceptionId != null) {
-      const byReception = receptions.find((x) => Number(x.receptionId) === Number(queryReceptionId));
-      if (byReception) {
-        setSelectedReception(byReception);
-        setSelectedPatientId(byReception.patientId);
-        return;
-      }
-    }
-    if (!queryPatientId) return;
-    const r = receptions.find((x) => x.patientId === queryPatientId);
-    if (r) {
-      setSelectedReception(r);
+    setLinkedVisits([]);
+    setLinkedChartError(null);
+    if (queryReceptionId == null) return;
+    let cancelled = false;
+
+    // A linked chart can outlive its entry in the waiting queue.
+    void Promise.all([fetchReceptionApi(String(queryReceptionId)), fetchClinicalApi(queryReceptionId)])
+      .then(([reception, visits]) => {
+        if (cancelled) return;
+        setLinkedVisits(visits);
+        const detail = { ...reception, departmentId: Number(reception.departmentId) || null };
+        setSelectedReception(detail);
+        setSelectedPatientId(reception.patientId);
+      })
+      .catch(() => {
+        if (!cancelled) setLinkedChartError("접수에 연결된 진료 차트를 불러오지 못했습니다.");
+      });
+
+    return () => { cancelled = true; };
+  }, [queryReceptionId, linkedChartRevision]);
+
+  React.useEffect(() => {
+    if (queryReceptionId != null || !queryPatientId) return;
+    const reception = receptions.find((item) => item.patientId === queryPatientId);
+    if (reception) {
+      setSelectedReception(reception);
       setSelectedPatientId(queryPatientId);
     }
   }, [queryPatientId, queryReceptionId, receptions]);
@@ -332,7 +358,7 @@ export default function ClinicalPage() {
   }, [selectedReception, patientMap]);
 
   React.useEffect(() => {
-    if (listForLeft.length === 0) return;
+    if (queryReceptionId != null || listForLeft.length === 0) return;
     const currentInList =
       selectedReception &&
       listForLeft.some((r) => r.receptionId === selectedReception.receptionId);
@@ -340,7 +366,7 @@ export default function ClinicalPage() {
       setSelectedReception(listForLeft[0]);
       setSelectedPatientId(listForLeft[0].patientId);
     }
-  }, [listForLeft, selectedReception]);
+  }, [listForLeft, queryReceptionId, selectedReception]);
 
   const totalLeftPages = Math.max(1, Math.ceil(listForLeft.length / LEFT_LIST_PAGE_SIZE));
   const paginatedLeftList = React.useMemo(() => {
@@ -364,7 +390,10 @@ export default function ClinicalPage() {
   const handleSelectReception = React.useCallback((r: ReceptionQueueItem) => {
     setSelectedReception(r);
     setSelectedPatientId(r.patientId);
-  }, []);
+    if (queryReceptionId != null && r.receptionId !== queryReceptionId) {
+      router.replace("/clinical?receptionId=" + r.receptionId);
+    }
+  }, [queryReceptionId, router]);
 
   const activeVisitClinical = React.useMemo(() => {
     if (!selectedReception || selectedReception.status !== "IN_PROGRESS") return null;
@@ -601,6 +630,7 @@ export default function ClinicalPage() {
 
   React.useEffect(() => {
     if (endVisitPhase !== "success" && endVisitPhase !== "error") return;
+    if (endVisitPhase === "success") refreshLinkedChart();
     const p = endVisitPromiseRef.current;
     endVisitPromiseRef.current = null;
     if (p) {
@@ -612,6 +642,7 @@ export default function ClinicalPage() {
 
   React.useEffect(() => {
     if (startVisitPhase === "success") {
+      refreshLinkedChart();
       const pid = startVisitPatientIdRef.current;
       if (pid != null) setSelectedPatientId(pid);
       setSelectedReception((prev) => (prev ? { ...prev, status: "IN_PROGRESS" } : prev));
@@ -643,6 +674,10 @@ export default function ClinicalPage() {
   const handleStartNewClinical = React.useCallback(() => {
     if (!selectedReception) {
       window.alert("접수 환자를 먼저 선택해 주세요.");
+      return;
+    }
+    if (["PAYMENT_WAIT", "COMPLETED"].includes(selectedReception.status ?? "")) {
+      window.alert("완료된 진료는 과거 진료기록에서 확인해 주세요.");
       return;
     }
     if (blockStartVisitOtherInProgress) {
@@ -774,6 +809,7 @@ export default function ClinicalPage() {
             {errorMessage}
           </Alert>
         )}
+        {linkedChartError && <Alert severity="error">{linkedChartError}</Alert>}
         <ClinicalToolbar
           creatingClinical={creatingClinical}
           selectedPatient={selectedReception ? selectedPatient : null}

@@ -116,7 +116,7 @@ docker compose logs --tail 30 oracle-restore
 
 - 빈 Oracle 볼륨에서 공개용 덤프를 복원했고, Oracle 복원과 MinIO 초기화가 종료 코드 0으로 완료됐습니다.
 - 새 이미지로 서비스 12개를 띄운 뒤 브라우저에서 데모 로그인과 푸터의 **프로젝트 문서** 링크가 이 README로 연결되는 것을 확인했습니다.
-- 가상 환자로 예약 `10005` → 외래 접수 `10006` → 진료 `21` 및 처치 오더 `41` → 진료 완료 → Kafka 청구 `10004` → 현금 수납을 API로 검증했습니다. Oracle에 15,000원 현금 수납 1건이 저장됐으며, 청구 상태는 `PAID`, 잔액은 0원이었습니다.
+- 가상 환자로 예약 `10007` → 외래 접수 `10008` → 진료 `42` 및 처치 오더 `62` → 진료 완료 → Kafka 청구 `10006` → 현금 수납을 API로 검증했습니다. Oracle에 15,000원 현금 수납 1건이 저장됐으며, 청구 상태는 `PAID`, 잔액은 0원이었습니다.
 
 ### 업무 화면
 
@@ -125,7 +125,7 @@ docker compose logs --tail 30 oracle-restore
 <details>
 <summary>예약 상세</summary>
 
-![가상 환자의 예약 상세와 예약 완료 상태](docs/images/portfolio-reservation.png)
+![가상 환자의 예약 상세](docs/images/portfolio-reservation.png)
 
 </details>
 
@@ -143,7 +143,18 @@ docker compose logs --tail 30 oracle-restore
 
 </details>
 
-예약 상세의 일부 확장 조회는 화면에 미지원으로 표시됩니다. 진료·오더는 API와 접수 상태 이력으로 확인했으며, 진료 차트 화면에서는 해당 레코드가 표시되지 않아 별도 캡처를 넣지 않았습니다.
+<details>
+<summary>진료 차트와 완료 후 진료 이력</summary>
+
+접수 ID가 있는 차트 주소는 접수 상세와 연결된 진료를 직접 조회합니다. 가상 접수 `10008`에서 진료 중 같은 주소를 새로고침해 환자와 처치 오더 1건을 확인했고, 진료 완료 후 같은 주소의 **과거 진료기록 → 보기**에서 저장된 주호소를 확인했습니다.
+
+![새로고침 후 가상 환자와 처치 오더가 표시된 진료 차트](docs/images/portfolio-clinical.png)
+
+![같은 차트 주소에서 완료된 진료의 주호소를 열어 본 화면](docs/images/portfolio-clinical-history.png)
+
+</details>
+
+예약 상세의 일부 확장 조회는 화면에 미지원으로 표시됩니다.
 
 
 ## 카카오페이 테스트 결제

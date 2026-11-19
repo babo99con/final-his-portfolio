@@ -538,20 +538,6 @@ export default function Sidebar({ menus: initialMenus, width = 240, onNavigate }
         )}
       </Box>
 
-      <Box sx={{ mt: 2, pt: 1.5, display: { xs: "none", md: "block" } }}>
-        <Box
-          sx={{
-            p: 1.25,
-            borderRadius: 2,
-            bgcolor: "rgba(255,255,255,0.65)",
-            border: "1px solid var(--line)",
-          }}
-        >
-          <Typography variant="caption" fontWeight={800} color="text.secondary">
-            * 확장은 Sprint에서 진행
-          </Typography>
-        </Box>
-      </Box>
     </Box>
   );
 }
